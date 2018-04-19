@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<title>jsPython Interpreter</title>
+
+		<script src="interpreter.js"></script>
+	</head>
+	<body>
+		<div id="editordiv">
+			<button onclick="Interpreter.Run()">Run code</button>
+			<button>Foo</button>
+			<button>Bar</button>
+			<textarea id="editor">
+print("Hello World")
+for x in range(0, 10):
+    print(x)</textarea>
+		</div>
+		<div id="consolediv">
+			<textarea disabled="true" id="console"></textarea>
+		</div>
+
+		<script>
+			document.getElementById("editor").onkeydown = function(e) {
+				if (e.keyCode == 9 || e.which == 9) {
+					e.preventDefault();
+					var s = this.selectionStart;
+					this.value = this.value.substring(0,this.selectionStart) + "	" + this.value.substring(this.selectionEnd);
+					this.selectionEnd = s+4;
+				}
+			}
+
+			Interpreter.Init();
+		</script>
+	</body>
+</html>
