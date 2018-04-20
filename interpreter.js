@@ -1,3 +1,5 @@
+// https://docs.python.org/3/reference/index.html
+
 var Interpreter = {
 	editorId: "editor",
 	consoleId: "console",
@@ -31,6 +33,17 @@ var Interpreter = {
 		}
 	},
 
+	TokenType: {
+		NEWLINE: 0
+	},
+
+	Token: class {
+		constructor(type, value) {
+			this.type = type;
+			this.value = value;
+		}
+	},
+
 	Init: function () {
 		this.editor = document.getElementById(this.editorId);
 		this.console = document.getElementById(this.consoleId);
@@ -52,75 +65,6 @@ var Interpreter = {
 
 		this.console.value = "";
 		code = this.editor.value;
-		lines = code.split('\n');
-		for (i in lines) {
-			line = lines[i];
-			current = "";
-			tokens = [];
-			string = false;
-			backslash = false;
-			for (j = 0; j < line.length; j++) {
-				c = line[j];
-				cn = "";
-				cnn = "";
-				if (j + 1 != line.length) cn = line[j + 1];
-				if (j + 2 < line.length) cnn = line[j + 2];
-
-				if (string != "") {
-					if (c == '\\') {
-						backslash = true;
-					} else if (backslash) {
-						backslash = false;
-						if (c == "n") {
-							current += "\n";
-						} else {
-							this.PrintLn("Not yet implemented: \\" + c);
-						}
-					} else {
-						current += c;
-						if (c == string) {
-							string = false;
-							tokens.tryPush(current);
-							current = "";
-						}
-					}
-				} else {
-					if (c == '"' || c == "'") {
-						tokens.tryPush(current);
-						current = c;
-						string = c;
-					} else if (c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == ",") {
-						tokens.tryPush(current);
-						tokens.tryPush(c);
-						current = "";
-					} else if (c == ' ') {
-						tokens.tryPush(current);
-						current = "";
-					} else if (c == '/' && cn == '/' && cnn == '=') {
-						tokens.tryPush(current);
-						tokens.tryPush("//=");
-						current = "";
-						j += 2;
-					} else if ((c == '/' || c == '&' || c == '|' || c == '<' || c == '>') && c == cn) {
-						tokens.tryPush(current);
-						tokens.tryPush(c + cn);
-						current = "";
-						j += 1;
-					} else if ((c == '=' || c == '&' || c == '|' || c == '^' || c == '+' || c == '-' || c == '*' || c == '/' || c == '<' || c == '>' || c == '!' || c == '%') && cn == '=') {
-						tokens.tryPush(current);
-						tokens.tryPush(c + cn);
-						current = "";
-						j++;
-					} else if (c == '+' || c == '-' || c == '=' || c == '<' || c == '>' || c == '*' || c == '/' || c == '~' || c == '^' || c == '|' || c == '&' || c == '%') {
-						tokens.tryPush(current);
-						tokens.tryPush(c);
-						current = "";
-					} else {
-						current += c;
-					}
-				}
-			}
-			tokens.tryPush(current);
-		}
+		
 	},
 };
