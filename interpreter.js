@@ -38,10 +38,10 @@ var Interpreter = {
 	},
 
 	TokenType: {
-		UNTOKENIZED: 0,
-		NEWLINE: 1,
-		INDENT: 2,
-		DEDENT: 3
+		UNTOKENIZED: "UNTOKENIZED",
+		NEWLINE: "NEWLINE",
+		INDENT: "INDENT",
+		DEDENT: "DEDENT"
 	},
 
 	Token: class {
