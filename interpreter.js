@@ -76,7 +76,10 @@ var Interpreter = {
 		WITH: "WITH",
 		YIELD: "YIELD",
 		IDENTIFIER: "IDENTIFIER",
-		STRING: "STRING"
+		STRING: "STRING",
+		INTEGER: "INTEGER",
+		FLOAT: "FLOAT",
+		IMAGINARY: "IMAGINARY"
 	},
 
 	Token: class {
@@ -222,6 +225,48 @@ var Interpreter = {
 			}
 			line = logicalLines[i];
 			for (j = 0; j < line.length; j++) {
+				integer = "";
+				if (line.substr(j, 2).match("^0[xXoObB]$")) { 
+					integer = line.substr(j, 2);
+					for (k = j + 2; k < line.length; k++) { // TODO: Check for invalid values
+						if (line[k].match("^[0-9A-Fa-f]$")) integer += line[k];
+						else break;
+					}
+				} else {
+					for (k = j; k < line.length; k++) {
+						if (line[k].match("^[0-9]$")) integer += line[k];
+						else break;
+					}
+				}
+
+				float = "";
+				imaginary = "";
+				for (k = j; k < line.length; k++) {
+					if (float) {
+						if (line[k] == 'e' || line[k] == 'E') {
+							if (k + 1 == line.length) {
+								// ERROR
+							} else {
+								float += line[k];
+								k++;
+								if (line[k].match("^[\\+\\-0-9]$")) {
+									float += line[k];
+								}
+							}
+						} else if (line[k].match("^[0-9\\.]$")) float += line[k];
+						else {
+							if (line[k] == 'j' || line[k] == 'J') {
+								imaginary = float + line[k];
+								float = "";
+							}
+							break;
+						}
+					} else {
+						if (line[k].match("^[0-9\\.]$")) float += line[k];
+						else break;
+					}
+				}
+
 				identifier = "";
 				for (k = j; k < line.length; k++) {
 					if (identifier) {
@@ -259,7 +304,17 @@ var Interpreter = {
 						}
 					}
 				}
-				if (string) {
+
+				if (imaginary) {
+					j += imaginary.length - 1;
+					tokens.push(new this.Token(this.TokenType.IMAGINARY, imaginary));
+				} else if (float) {
+					j += float.length - 1;
+					tokens.push(new this.Token(this.TokenType.FLOAT, float));
+				} else if (integer) {
+					j += integer.length - 1;
+					tokens.push(new this.Token(this.TokenType.INTEGER, integer));
+				} else if (string) {
 					j += string.length - 1;
 					while ((string[0] == '"' || string[0] == "'") && string[0] == string[string.length - 1]) {
 						string = string.substr(1, string.length - 2);
