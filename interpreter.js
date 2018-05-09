@@ -79,7 +79,28 @@ var Interpreter = {
 		STRING: "STRING",
 		INTEGER: "INTEGER",
 		FLOAT: "FLOAT",
-		IMAGINARY: "IMAGINARY"
+		IMAGINARY: "IMAGINARY",
+		// Operators
+		PLUS: "+",
+		MINUS: "-",
+		ASTERISK: "*",
+		DOUBLE_ASTERISK: "**",
+		SLASH: "/",
+		DOUBLE_SLASH: "//",
+		PERCENT: "%",
+		AT: "@",
+		DOUBLE_LESS: "<<",
+		DOUBLE_MORE: ">>",
+		AMPERSAND: "&",
+		PIPE: "|",
+		CARET: "^",
+		TILDE: "~",
+		LESS: "<",
+		MORE: ">",
+		LESS_EQUAL: "<=",
+		MORE_EQUAL: ">=",
+		DOUBLE_EQUAL: "==",
+		INEQUAL: "!="
 	},
 
 	Token: class {
@@ -278,6 +299,17 @@ var Interpreter = {
 					}
 				}
 
+				operator = "";
+				{
+					operators = ["+", "-", "*", "**", "/", "//", "%", "@", "<<", ">>", "&", "|", "^", "~", "<", ">", "<=", ">=", "==", "!="];
+					op = "";
+					for (k = j; k < line.length; k++) {
+						op += line[k];
+						if (operators.indexOf(op) != -1) operator = op;
+						if (op.length == 2) break;
+					}
+				}
+
 				string = "";
 				{
 					beginning = "";
@@ -305,10 +337,74 @@ var Interpreter = {
 					}
 				}
 
-				if (imaginary) {
+				if (operator) {
+					j += operator.length - 1;
+					switch (operator) {
+						case "+":
+							tokens.push(new this.Token(this.TokenType.PLUS, operator));
+							break;
+						case "-":
+							tokens.push(new this.Token(this.TokenType.MINUS, operator));
+							break;
+						case "*":
+							tokens.push(new this.Token(this.TokenType.ASTERISK, operator));
+							break;
+						case "**":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_ASTERISK, operator));
+							break;
+						case "/":
+							tokens.push(new this.Token(this.TokenType.SLASH, operator));
+							break;
+						case "//":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_SLASH, operator));
+							break;
+						case "%":
+							tokens.push(new this.Token(this.TokenType.PERCENT, operator));
+							break;
+						case "@":
+							tokens.push(new this.Token(this.TokenType.AT, operator));
+							break;
+						case "<<":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_LESS, operator));
+							break;
+						case ">>":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_MORE, operator));
+							break;
+						case "&":
+							tokens.push(new this.Token(this.TokenType.AMPERSAND, operator));
+							break;
+						case "|":
+							tokens.push(new this.Token(this.TokenType.PIPE, operator));
+							break;
+						case "^":
+							tokens.push(new this.Token(this.TokenType.CARET, operator));
+							break;
+						case "~":
+							tokens.push(new this.Token(this.TokenType.TILDE, operator));
+							break;
+						case "<":
+							tokens.push(new this.Token(this.TokenType.LESS, operator));
+							break;
+						case ">":
+							tokens.push(new this.Token(this.TokenType.MORE, operator));
+							break;
+						case "<=":
+							tokens.push(new this.Token(this.TokenType.LESS_EQUAL, operator));
+							break;
+						case ">=":
+							tokens.push(new this.Token(this.TokenType.MORE_EQUAL, operator));
+							break;
+						case "==":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_EQUAL, operator));
+							break;
+						case "!=":
+							tokens.push(new this.Token(this.TokenType.INEQUAL, operator));
+							break;
+					}
+				} else if (imaginary) {
 					j += imaginary.length - 1;
 					tokens.push(new this.Token(this.TokenType.IMAGINARY, imaginary));
-				} else if (float) {
+				} else if (float && float != integer) {
 					j += float.length - 1;
 					tokens.push(new this.Token(this.TokenType.FLOAT, float));
 				} else if (integer) {
