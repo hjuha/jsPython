@@ -75,7 +75,8 @@ var Interpreter = {
 		WHILE: "WHILE",
 		WITH: "WITH",
 		YIELD: "YIELD",
-		IDENTIFIER: "IDENTIFIER"
+		IDENTIFIER: "IDENTIFIER",
+		STRING: "STRING"
 	},
 
 	Token: class {
@@ -232,7 +233,43 @@ var Interpreter = {
 					}
 				}
 
-				if (identifier) {
+				string = "";
+				{
+					beginning = "";
+					if (line.substr(j, 3) == '"""') beginning = '"""';
+					else if (line.substr(j, 3) == "'''") beginning = "'''";
+					else if (line[j] == "'") beginning = "'";
+					else if (line[j] == '"') beginning = '"';
+					
+					if (beginning) {
+						string = beginning;
+						backslash = false;
+						for (k = j + beginning.length; k < line.length; k++) {
+							if (backslash) {
+								backslash = false;
+							} else if (string) {
+								if (line[k] == '\\') {
+									backslash = true;
+								} else if (line.substr(k, beginning.length) == beginning) {
+									string += beginning;
+									break;
+								}
+							}
+							string += line[k];
+						}
+					}
+				}
+				if (string) {
+					j += string.length - 1;
+					while ((string[0] == '"' || string[0] == "'") && string[0] == string[string.length - 1]) {
+						string = string.substr(1, string.length - 2);
+					}
+					if (tokens && tokens[tokens.length - 1].type == this.TokenType.STRING) {
+						tokens[tokens.length - 1].value = tokens[tokens.length - 1].value + string;
+					} else {
+						tokens.push(new this.Token(this.TokenType.STRING, string));
+					}
+				} else if (identifier) {
 					switch (identifier) {
 						case "False":
 							tokens.push(new this.Token(this.TokenType.FALSE, identifier));
