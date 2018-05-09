@@ -651,7 +651,8 @@ var Interpreter = {
 			indentationStack.pop();
 		}
 				
-		for (token of tokens) {
+		for (t = 0; t < tokens.length; t++) {
+			token = tokens[t];
 			this.PrintLn("Token: " + token.type + " => " + token.value)
 		}
 	},
