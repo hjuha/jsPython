@@ -41,7 +41,41 @@ var Interpreter = {
 		UNTOKENIZED: "UNTOKENIZED",
 		NEWLINE: "NEWLINE",
 		INDENT: "INDENT",
-		DEDENT: "DEDENT"
+		DEDENT: "DEDENT",
+		FALSE: "FALSE",
+		NONE: "NONE",
+		TRUE: "TRUE",
+		AND: "AND",
+		AS: "AS",
+		ASSERT: "ASSERT",
+		BREAK: "BREAK",
+		CLASS: "CLASS",
+		CONTINUE: "CONTINUE",
+		DEF: "DEF",
+		DEL: "DEL",
+		ELIF: "ELIF",
+		ELSE: "ELSE",
+		EXCEPT: "EXCEPT",
+		FINALLY: "FINALLY",
+		FOR: "FOR",
+		FROM: "FROM",
+		GLOBAL: "GLOBAL",
+		IF: "IF",
+		IMPORT: "IMPORT",
+		IN: "IN",
+		IS: "IS",
+		LAMBDA: "LAMBDA",
+		NONLOCAL: "NONLOCAL",
+		NOT: "NOT",
+		OR: "OR",
+		PASS: "PASS",
+		RAISE: "RAISE",
+		RETURN: "RETURN",
+		TRY: "TRY",
+		WHILE: "WHILE",
+		WITH: "WITH",
+		YIELD: "YIELD",
+		IDENTIFIER: "IDENTIFIER"
 	},
 
 	Token: class {
@@ -185,6 +219,127 @@ var Interpreter = {
 					this.PrintLn("TabError");
 				}
 			}
+			line = logicalLines[i];
+			for (j = 0; j < line.length; j++) {
+				identifier = "";
+				for (k = j; k < line.length; k++) {
+					if (identifier) {
+						if (line[k].match("^[A-Za-z0-9_]$")) identifier += line[k];
+						else break;
+					} else {
+						if (line[k].match("^[A-Za-z_]$")) identifier += line[k];
+						else break;
+					}
+				}
+
+				if (identifier) {
+					switch (identifier) {
+						case "False":
+							tokens.push(new this.Token(this.TokenType.FALSE, identifier));
+							break;
+						case "None":
+							tokens.push(new this.Token(this.TokenType.NONE, identifier));
+							break;
+						case "True":
+							tokens.push(new this.Token(this.TokenType.TRUE, identifier));
+							break;
+						case "and":
+							tokens.push(new this.Token(this.TokenType.AND, identifier));
+							break;
+						case "as":
+							tokens.push(new this.Token(this.TokenType.AS, identifier));
+							break;
+						case "assert":
+							tokens.push(new this.Token(this.TokenType.ASSERT, identifier));
+							break;
+						case "break":
+							tokens.push(new this.Token(this.TokenType.BREAK, identifier));
+							break;
+						case "class":
+							tokens.push(new this.Token(this.TokenType.CLASS, identifier));
+							break;
+						case "continue":
+							tokens.push(new this.Token(this.TokenType.CONTINUE, identifier));
+							break;
+						case "def":
+							tokens.push(new this.Token(this.TokenType.DEF, identifier));
+							break;
+						case "del":
+							tokens.push(new this.Token(this.TokenType.DEL, identifier));
+							break;
+						case "elif":
+							tokens.push(new this.Token(this.TokenType.ELIF, identifier));
+							break;
+						case "else":
+							tokens.push(new this.Token(this.TokenType.ELSE, identifier));
+							break;
+						case "except":
+							tokens.push(new this.Token(this.TokenType.EXCEPT, identifier));
+							break;
+						case "finally":
+							tokens.push(new this.Token(this.TokenType.FINALLY, identifier));
+							break;
+						case "for":
+							tokens.push(new this.Token(this.TokenType.FOR, identifier));
+							break;
+						case "from":
+							tokens.push(new this.Token(this.TokenType.FROM, identifier));
+							break;
+						case "global":
+							tokens.push(new this.Token(this.TokenType.GLOBAL, identifier));
+							break;
+						case "if":
+							tokens.push(new this.Token(this.TokenType.IF, identifier));
+							break;
+						case "import":
+							tokens.push(new this.Token(this.TokenType.IMPORT, identifier));
+							break;
+						case "in":
+							tokens.push(new this.Token(this.TokenType.IN, identifier));
+							break;
+						case "is":
+							tokens.push(new this.Token(this.TokenType.IS, identifier));
+							break;
+						case "lambda":
+							tokens.push(new this.Token(this.TokenType.LAMBDA, identifier));
+							break;
+						case "nonlocal":
+							tokens.push(new this.Token(this.TokenType.NONLOCAL, identifier));
+							break;
+						case "not":
+							tokens.push(new this.Token(this.TokenType.NOT, identifier));
+							break;
+						case "or":
+							tokens.push(new this.Token(this.TokenType.OR, identifier));
+							break;
+						case "pass":
+							tokens.push(new this.Token(this.TokenType.PASS, identifier));
+							break;
+						case "raise":
+							tokens.push(new this.Token(this.TokenType.RAISE, identifier));
+							break;
+						case "return":
+							tokens.push(new this.Token(this.TokenType.RETURN, identifier));
+							break;
+						case "try":
+							tokens.push(new this.Token(this.TokenType.TRY, identifier));
+							break;
+						case "while":
+							tokens.push(new this.Token(this.TokenType.WHILE, identifier));
+							break;
+						case "with":
+							tokens.push(new this.Token(this.TokenType.WITH, identifier));
+							break;
+						case "yield":
+							tokens.push(new this.Token(this.TokenType.YIELD, identifier));
+							break;
+						default:
+							tokens.push(new this.Token(this.TokenType.IDENTIFIER, identifier));
+							break;
+					}
+					j += identifier.length - 1;
+				}
+			}
 			tokens.push(new this.Token(this.TokenType.UNTOKENIZED, logicalLines[i]));
 			tokens.push(new this.Token(this.TokenType.NEWLINE, ""));
 		}
@@ -192,7 +347,7 @@ var Interpreter = {
 			tokens.push(new this.Token(this.TokenType.DEDENT, ""));
 			indentationStack.pop();
 		}
-		
+				
 		for (token of tokens) {
 			this.PrintLn("Token: " + token.type + " => " + token.value)
 		}
