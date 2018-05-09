@@ -100,7 +100,33 @@ var Interpreter = {
 		LESS_EQUAL: "<=",
 		MORE_EQUAL: ">=",
 		DOUBLE_EQUAL: "==",
-		INEQUAL: "!="
+		INEQUAL: "!=",
+		// Delimiters
+		LEFT_PARENTHESIS: "(",
+		RIGHT_PARENTHESIS: ")",
+		LEFT_BRACKET: "[",
+		RIGHT_BRACKET: "]",
+		LEFT_BRACE: "{",
+		RIGHT_BRACE: "}",
+		COMMA: ",",
+		COLON: ":",
+		PERIOD: ".",
+		SEMICOLON: ";",
+		EQUAL: "=",
+		ARROW: "->",
+		PLUS_EQUAL: "+=",
+		MINUS_EQUAL: "-=",
+		ASTERISK_EQUAL: "*=",
+		SLASH_EQUAL: "/=",
+		DOUBLE_SLASH_EQUAL: "//=",
+		PERCENT_EQUAL: "%=",
+		AT_EQUAL: "@=",
+		AMPERSAND_EQUAL: "&=",
+		PIPE_EQUAL: "|=",
+		CARET_EQUAL: "^=",
+		DOUBLE_LESS_EQUAL: "<<=",
+		DOUBLE_MORE_EQUAL: ">>=",
+		DOUBLE_ASTERISK_EQUAL: "**="
 	},
 
 	Token: class {
@@ -310,6 +336,17 @@ var Interpreter = {
 					}
 				}
 
+				delimiter = "";
+				{
+					delimiters = ["(", ")", "[", "]", "{", "}", ",", ".", ";", ":", "=", "->", "+=", "-=", "*=", "/=", "//=", "%=", "@=", "&=", "|=", "^=", ">>=", "<<=", "**="];
+					del = "";
+					for (k = j; k < line.length; k++) {
+						del += line[k];
+						if (delimiters.indexOf(del) != -1) delimiter = del;
+						if (del.length == 3) break;
+					}
+				}
+
 				string = "";
 				{
 					beginning = "";
@@ -337,7 +374,86 @@ var Interpreter = {
 					}
 				}
 
-				if (operator) {
+				if (delimiter && delimiter.length >= operator.length) {
+					j += delimiter.length - 1;
+					switch (delimiter) {
+						case "(":
+							tokens.push(new this.Token(this.TokenType.LEFT_PARENTHESIS, delimiter));
+							break;
+						case ")":
+							tokens.push(new this.Token(this.TokenType.RIGHT_PARENTHESIS, delimiter));
+							break;
+						case "[":
+							tokens.push(new this.Token(this.TokenType.LEFT_BRACKET, delimiter));
+							break;
+						case "]":
+							tokens.push(new this.Token(this.TokenType.RIGHT_BRACKET, delimiter));
+							break;
+						case "{":
+							tokens.push(new this.Token(this.TokenType.LEFT_BRACE, delimiter));
+							break;
+						case "}":
+							tokens.push(new this.Token(this.TokenType.RIGHT_BRACE, delimiter));
+							break;
+						case ",":
+							tokens.push(new this.Token(this.TokenType.COMMA, delimiter));
+							break;
+						case ".":
+							tokens.push(new this.Token(this.TokenType.PERIOD, delimiter));
+							break;
+						case ";":
+							tokens.push(new this.Token(this.TokenType.SEMICOLON, delimiter));
+							break;
+						case ":":
+							tokens.push(new this.Token(this.TokenType.COLON, delimiter));
+							break;
+						case "=":
+							tokens.push(new this.Token(this.TokenType.EQUAL, delimiter));
+							break;
+						case "->":
+							tokens.push(new this.Token(this.TokenType.ARROW, delimiter));
+							break;
+						case "+=":
+							tokens.push(new this.Token(this.TokenType.PLUS_EQUAL, delimiter));
+							break;
+						case "-=":
+							tokens.push(new this.Token(this.TokenType.MINUS_EQUAL, delimiter));
+							break;
+						case "*=":
+							tokens.push(new this.Token(this.TokenType.ASTERISK_EQUAL, delimiter));
+							break;
+						case "/=":
+							tokens.push(new this.Token(this.TokenType.SLASH_EQUAL, delimiter));
+							break;
+						case "//=":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_SLASH_EQUAL, delimiter));
+							break;
+						case "%=":
+							tokens.push(new this.Token(this.TokenType.PERCENT_EQUAL, delimiter));
+							break;
+						case "@=":
+							tokens.push(new this.Token(this.TokenType.AT_EQUAL, delimiter));
+							break;
+						case "&=":
+							tokens.push(new this.Token(this.TokenType.AMPERSAND_EQUAL, delimiter));
+							break;
+						case "|=":
+							tokens.push(new this.Token(this.TokenType.PIPE_EQUAL, delimiter));
+							break;
+						case "^=":
+							tokens.push(new this.Token(this.TokenType.CARET_EQUAL, delimiter));
+							break;
+						case ">>=":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_MORE_EQUAL, delimiter));
+							break;
+						case "<<=":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_LESS, delimiter));
+							break;
+						case "**=":
+							tokens.push(new this.Token(this.TokenType.DOUBLE_ASTERISK_EQUAL, delimiter));
+							break;
+					}
+				} else if (operator) {
 					j += operator.length - 1;
 					switch (operator) {
 						case "+":
@@ -528,7 +644,6 @@ var Interpreter = {
 					j += identifier.length - 1;
 				}
 			}
-			tokens.push(new this.Token(this.TokenType.UNTOKENIZED, logicalLines[i]));
 			tokens.push(new this.Token(this.TokenType.NEWLINE, ""));
 		}
 		while (indentationStack.length != 1) {
