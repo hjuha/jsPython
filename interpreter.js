@@ -149,14 +149,7 @@ var Interpreter = {
 		this.console.value += s + '\n';
 	},
 
-	Run: function () {
-		Array.prototype.tryPush = function (s) {
-			if (s == "") return;
-			this.push(s);
-		}
-
-		this.console.value = "";
-		code = this.editor.value;
+	Tokenize: function (code) {
 		physicalLines = code.split("\n");
 		logicalLines = [];
 		
@@ -650,6 +643,19 @@ var Interpreter = {
 			tokens.push(new this.Token(this.TokenType.DEDENT, ""));
 			indentationStack.pop();
 		}
+		return tokens;
+	},
+
+	Run: function () {
+		Array.prototype.tryPush = function (s) {
+			if (s == "") return;
+			this.push(s);
+		}
+
+		this.console.value = "";
+		code = this.editor.value;
+		
+		tokens = this.Tokenize(code);
 				
 		for (t = 0; t < tokens.length; t++) {
 			token = tokens[t];
