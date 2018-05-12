@@ -736,18 +736,26 @@ var Interpreter = {
 			}
 			
 			for (let i = 0; i < parsed.length; i++) {
-				if (i == 0 && [TT.MINUS, TT.PLUS, TT.TILDE].indexOf(parsed[i].type) != -1 && getTypes(parsed, i+1,1).equals([ET.ATOM])) {
+				if (getTypes(parsed, i, 3).equals([TT.LEFT_PARENTHESIS, ET.ATOM, TT.RIGHT_PARENTHESIS])) {
+					parsed.splice(i + 2, 1);	
+					parsed.splice(i, 1);
+					break;
+				} else if (i == 0 && [TT.MINUS, TT.PLUS, TT.TILDE].indexOf(parsed[i].type) != -1 && getTypes(parsed, i+1,1).equals([ET.ATOM])) {
 					expr = new this.Expr(ET.ATOM, null);
 					expr.children.push(parsed[i]);
 					expr.children.push(parsed[i + 1]);
 					parsed.splice(i, 2, expr);
-				} else if (i != 0 && [TT.MINUS, TT.PLUS, TT.TILDE].indexOf(parsed[i].type) != -1 && getTypes(parsed, i+1,1).equals([ET.ATOM]) && [TT.EQUAL, TT.LEFT_BRACE, TT.LEFT_BRACKET, TT.LEFT_PARENTHESIS, TT.PLUS_EQUAL, TT.AMPERSAND_EQUAL, TT.DOUBLE_EQUAL, TT.MORE_EQUAL, TT.LESS_EQUAL, TT.CARET_EQUAL, TT.PIPE_EQUAL, TT.DOUBLE_AMPERSAND_EQUAL, TT.DOUBLE_EQUAL, TT.AT_EQUAL, TT.PERCENT_EQUAL, TT.MINUS_EQUAL, TT.SLASH_EQUAL, TT.DOUBLE_SLASH_EQUAL, TT.DOUBLE_LESS_EQUAL, TT.DOUBLE_MORE_EQUAL].indexOf(parsed[i - 1].type) != -1) {
+					break;
+				} else if (i != 0 && [TT.MINUS, TT.PLUS, TT.TILDE].indexOf(parsed[i].type) != -1 && getTypes(parsed, i+1,1).equals([ET.ATOM]) && [TT.EQUAL, TT.LEFT_BRACE, TT.LEFT_BRACKET, TT.LEFT_PARENTHESIS, TT.PLUS_EQUAL, TT.AMPERSAND_EQUAL, TT.DOUBLE_EQUAL, TT.MORE_EQUAL, TT.LESS_EQUAL, TT.CARET_EQUAL, TT.PIPE_EQUAL, TT.DOUBLE_AMPERSAND_EQUAL, TT.DOUBLE_EQUAL, TT.AT_EQUAL, TT.PERCENT_EQUAL, TT.MINUS_EQUAL, TT.SLASH_EQUAL, TT.DOUBLE_SLASH_EQUAL, TT.DOUBLE_LESS_EQUAL, TT.DOUBLE_MORE_EQUAL, TT.PLUS, TT.ASTERISK, TT.MINUS, TT.DOUBLE_ASTERISK, TT.DOUBLE_SLASH, TT.SLASH, TT.CARET, TT.TILDE].indexOf(parsed[i - 1].type) != -1) {
 					expr = new this.Expr(ET.ATOM, null);
 					expr.children.push(parsed[i]);
 					expr.children.push(parsed[i + 1]);
 					parsed.splice(i, 2, expr);
+					break;
 				}
 			}
+
+			if (!original.equals(parsed)) continue;
 
 			for (i = 0; i < parsed.length; i++) {
 				if (getTypes(parsed, i, 4).equals([ET.ATOM, TT.EQUAL, ET.ATOM, TT.NEWLINE])) {
@@ -755,10 +763,8 @@ var Interpreter = {
 					expr.children.push(parsed[i + 1]);
 					expr.children.push(parsed[i]);
 					expr.children.push(parsed[i + 2]);
-					parsed.splice(i, 4, expr);	
-				} else if (getTypes(parsed, i, 3).equals([TT.LEFT_PARENTHESIS, ET.ATOM, TT.RIGHT_PARENTHESIS])) {
-					parsed.splice(i + 2, 1);	
-					parsed.splice(i, 1);	
+					parsed.splice(i, 4, expr);
+					break;
 				}
 			}
 
@@ -824,16 +830,19 @@ var Interpreter = {
 					expr.children.push(parsed[i]);
 					expr.children.push(parsed[i + 1]);
 					parsed.splice(i, 2, expr);
+					break;
 				} else if (getTypes(parsed, i, 2).equals([TT.PLUS, ET.ATOM])) {
 					expr = new this.Expr(ET.ATOM, null);
 					expr.children.push(parsed[i]);
 					expr.children.push(parsed[i + 1]);
 					parsed.splice(i, 2, expr);
+					break;
 				} else if (getTypes(parsed, i, 2).equals([TT.TILDE, ET.ATOM])) {
 					expr = new this.Expr(ET.ATOM, null);
 					expr.children.push(parsed[i]);
 					expr.children.push(parsed[i + 1]);
 					parsed.splice(i, 2, expr);
+					break;
 				}
 			}
 
