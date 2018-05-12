@@ -9,32 +9,16 @@ var Interpreter = {
 	consoleId: "console",
 	editor: null,
 	console: null,
-	functions: {
-		print: function () {
-			end = "\n";
-			sep = " ";
-			args = [];
-			for (i in arguments) {
-				args.push(arguments[i]);
-			}
-			for (i = 0; i < args.length; i++) {
-				if (args[i].substr(0, 4) == "sep=") {
-					sep = args[i].substr(4);
-					args.splice(i, 1);
-					i--;
-				}
-				if (args[i].substr(0, 4) == "end=") {
-					end = args[i].substr(4);
-					args.splice(i, 1);
-					i--;
-				}
-			}
-			for (i = 0; i < args.length; i++) {
-				Interpreter.Print(args[i]);
-				if (i + 1 == args.length) Interpreter.Print(end);
-				else Interpreter.Print(sep);
-			}
+
+	Variable: class {
+		constructor (type, value) {
+			this.type = type;
+			this.value = value;
 		}
+	},
+
+	variables: {
+		
 	},
 
 	TokenType: {
@@ -48,6 +32,7 @@ var Interpreter = {
 		AND: "AND",
 		AS: "AS",
 		ASSERT: "ASSERT",
+		AWAIT: "AWAIT",
 		BREAK: "BREAK",
 		CLASS: "CLASS",
 		CONTINUE: "CONTINUE",
@@ -133,6 +118,54 @@ var Interpreter = {
 		constructor(type, value) {
 			this.type = type;
 			this.value = value;
+		}
+	},
+
+	ExprType: {
+		ATOM: "atom",
+		IDENTIFIER: "identifier",
+		LITERAL: "literal",
+		PARENTH_FORM: "parenth_form",
+		STARRED_EXPRESSION: "starred_expression",
+		COMPREHENSION: "comprehension",
+		EXPRESSION: "expression",
+		COMP_FOR: "comp_for",
+		TARGET_LIST: "target_list",
+		OR_TEST: "or_test",
+		COMP_ITER: "comp_iter",
+		COMP_IF: "comp_if",
+		EXPRESSION_NOCOND: "expression_nocond",
+		LIST_DISPLAY: "list_display",
+		SET_DISPLAY: "set_display",
+		STARRED_LIST: "starred_list", 
+		DICT_DISPLAY: "dict_display", // not implemented
+		KEY_DATUM_LIST: "key_datum_list", // not implemented
+		KEY_DATUM: "key_datum", // not implemented
+		DICT_COMPREHENSION: "dict_comprehension", // not implemented
+		GENERATOR_EXPRESSION: "generator_expression",
+		YIELD_ATOM: "yield_atom", // not implemented
+		YIELD_EXPRESSION: "yield_expression", // not implemented
+		PRIMARY: "primary",
+		ATTRIBUTEREF: "attributeref",
+		SUBSCRIPTION: "subscription",
+		SLICING: "slicing", // not implemented
+		CALL: "call", // not implemented
+		EXPRESSION_LIST: "expression_list",
+		SLICE_LIST: "slice_list", // not implemented
+		SLICE_ITEM: "slice_item", // not implemented
+		PROPER_SLICE: "proper_slice", // not implemented
+		AWAIT_EXPR: "await_expr",
+		POWER: "power",
+		U_EXPR: "u_expr",
+		M_EXPR: "m_expr",
+		A_EXPR: "a_expr",
+	},
+
+	Expr: class {
+		constructor(type, tkn) {
+			this.type = type;
+			this.token = tkn;
+			this.children = [];
 		}
 	},
 
@@ -549,6 +582,9 @@ var Interpreter = {
 						case "assert":
 							tokens.push(new this.Token(this.TokenType.ASSERT, identifier));
 							break;
+						case "await":
+							tokens.push(new this.Token(this.TokenType.AWAIT, identifier));
+							break;
 						case "break":
 							tokens.push(new this.Token(this.TokenType.BREAK, identifier));
 							break;
@@ -646,6 +682,197 @@ var Interpreter = {
 		return tokens;
 	},
 
+	Parse: function (tokens) {
+		Array.prototype.equals = function (arr) {
+			if (!arr) return false;
+			if (arr.length != this.length) return false;
+			for (x = 0; x < arr.length; x++) {
+				a = 0;
+				b = 0;
+				if (typeof arr[x] == "string") {
+					a = arr[x];
+				} else {
+					a = arr[x].type;
+				}
+				if (typeof this[x] == "string") {
+					b = this[x];
+				} else {
+					b = this[x].type;
+				}
+				if (a != b) return false;
+			}
+			return true;
+		}
+		getTypes = function (arr, i, k) {
+			ret = [];
+			while (k > 0 && i < arr.length) {
+				ret.push(arr[i].type);
+				k--;
+				i++;
+			}
+			return ret;
+		}
+
+		TT = this.TokenType;
+		ET = this.ExprType;
+		parsed = [];
+		for (t = 0; t < tokens.length; t++) {
+			token = tokens[t];
+			if (token.type == TT.IDENTIFIER) {
+				atom = new this.Expr(ET.ATOM, null);
+				atom.children.push(new this.Expr(ET.IDENTIFIER, token));
+				parsed.push(atom);
+			} else if ([TT.STRING, TT.INTEGER, TT.FLOAT, TT.IMAGINARY].indexOf(token.type) != -1) {
+				atom = new this.Expr(ET.ATOM, null);
+				atom.children.push(new this.Expr(ET.LITERAL, token));
+				parsed.push(atom);
+			} else parsed.push(token);
+		}
+
+		while (true) {
+			original = [];
+			for (i = 0; i < parsed.length; i++) {
+				original.push(new this.Expr(parsed[i].type, null));
+			}
+			
+			for (let i = 0; i < parsed.length; i++) {
+				if (i == 0 && [TT.MINUS, TT.PLUS, TT.TILDE].indexOf(parsed[i].type) != -1 && getTypes(parsed, i+1,1).equals([ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 1]);
+					parsed.splice(i, 2, expr);
+				} else if (i != 0 && [TT.MINUS, TT.PLUS, TT.TILDE].indexOf(parsed[i].type) != -1 && getTypes(parsed, i+1,1).equals([ET.ATOM]) && [TT.EQUAL, TT.LEFT_BRACE, TT.LEFT_BRACKET, TT.LEFT_PARENTHESIS, TT.PLUS_EQUAL, TT.AMPERSAND_EQUAL, TT.DOUBLE_EQUAL, TT.MORE_EQUAL, TT.LESS_EQUAL, TT.CARET_EQUAL, TT.PIPE_EQUAL, TT.DOUBLE_AMPERSAND_EQUAL, TT.DOUBLE_EQUAL, TT.AT_EQUAL, TT.PERCENT_EQUAL, TT.MINUS_EQUAL, TT.SLASH_EQUAL, TT.DOUBLE_SLASH_EQUAL, TT.DOUBLE_LESS_EQUAL, TT.DOUBLE_MORE_EQUAL].indexOf(parsed[i - 1].type) != -1) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 1]);
+					parsed.splice(i, 2, expr);
+				}
+			}
+
+			for (i = 0; i < parsed.length; i++) {
+				if (getTypes(parsed, i, 4).equals([ET.ATOM, TT.EQUAL, ET.ATOM, TT.NEWLINE])) {
+					expr = new this.Expr(ET.EXPRESSION, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 4, expr);	
+				} else if (getTypes(parsed, i, 3).equals([TT.LEFT_PARENTHESIS, ET.ATOM, TT.RIGHT_PARENTHESIS])) {
+					parsed.splice(i + 2, 1);	
+					parsed.splice(i, 1);	
+				}
+			}
+
+			if (!original.equals(parsed)) continue;
+			
+			for (i = 0; i < parsed.length; i++) {
+				if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.ASTERISK, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				} else if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.SLASH, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				} else if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.DOUBLE_SLASH, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				} else if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.PERCENT, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				}
+			}
+
+			if (!original.equals(parsed)) continue;
+			
+			for (i = 0; i < parsed.length; i++) {
+				if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.MINUS, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				} else if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.PLUS, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				}
+			}
+
+			if (!original.equals(parsed)) continue;
+			
+			for (i = 0; i < parsed.length; i++) {
+				if (getTypes(parsed, i, 2).equals([TT.MINUS, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 1]);
+					parsed.splice(i, 2, expr);
+				} else if (getTypes(parsed, i, 2).equals([TT.PLUS, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 1]);
+					parsed.splice(i, 2, expr);
+				} else if (getTypes(parsed, i, 2).equals([TT.TILDE, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 1]);
+					parsed.splice(i, 2, expr);
+				}
+			}
+
+			if (original.equals(parsed)) break;
+		}
+
+		return parsed;
+	},
+
+	PrintNode: function (n, d) {
+		for (let i = 0; i < d; i++) this.Print("  ");
+		if (n instanceof this.Expr) {
+			if (n.token != null) this.PrintLn("[" + n.type + "] " + "(" + n.token.type + ") " + n.token.value);
+			else this.PrintLn("[" + n.type + "] " + "null");
+			for (let c = 0; c < n.children.length; c++) {
+				child = n.children[c];
+				this.PrintNode(child, d + 1);
+			}
+		} else {
+			this.PrintLn("[" + n.type + "] " + n.value);
+		}
+	},
+
+	Simplify: function (n) {
+		if (n instanceof this.Expr) {
+			if (n.token == null || n.token.value == null) {
+				n.token = n.children[0];
+				if (n.token instanceof this.Expr) {
+					n.token = n.token.token;
+				}
+				n.children.shift();
+			}
+			for (let c = 0; c < n.children.length; c++) {
+				child = n.children[c];
+				this.Simplify(child);
+			}
+		}
+	},
+
 	Run: function () {
 		Array.prototype.tryPush = function (s) {
 			if (s == "") return;
@@ -656,10 +883,18 @@ var Interpreter = {
 		code = this.editor.value;
 		
 		tokens = this.Tokenize(code);
-				
-		for (t = 0; t < tokens.length; t++) {
+		
+		parsed = this.Parse(tokens);
+
+		/*for (t = 0; t < tokens.length; t++) {
 			token = tokens[t];
-			this.PrintLn("Token: " + token.type + " => " + token.value)
+			this.PrintLn("Token: " + token.type + " => " + token.value);
+		}*/
+
+		for (t = 0; t < parsed.length; t++) {
+			node = parsed[t];
+			this.Simplify(node);
+			this.PrintNode(node, 0);
 		}
 	},
 };
