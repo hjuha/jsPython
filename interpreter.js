@@ -1088,6 +1088,68 @@ var Interpreter = {
 						return;
 					}
 				}
+
+				if (token.type == TT.SLASH) {
+					let var1 = this.Evaluate(n.children[0]);
+					if (var1.type == VT.BOOLEAN) var1.type = VT.INTEGER;
+					let var2 = this.Evaluate(n.children[1]);
+					if (var2.type == VT.BOOLEAN) var2.type = VT.INTEGER;
+
+					if ((var2.type != VT.INTEGER && var2.type != VT.FLOAT && var2.type != VT.COMPLEX)
+						|| (var1.type != VT.INTEGER && var1.type != VT.FLOAT && var1.type != VT.COMPLEX)) {
+						this.Error("Binääristä operaattoria \"/\" ei ole määritelty tyypeille \"" + var1.type + "\" ja \"" + var2.type + "\"", n);
+						return;
+					}
+
+					if (var2.type == VT.INTEGER || var2.type == VT.FLOAT) {
+						if (var2.value == 0) {
+							this.Error("Nollalla jakaminen", n);
+						}
+					} else if (var2.type == VT.COMPLEX) {
+						if (var2.value.equals([0, 0])) {
+							this.Error("Nollalla jakaminen", n);
+						}
+					}
+
+					if (var2.type == VT.COMPLEX) {
+						let a;
+						let b = 0;
+						if (var1.type == VT.COMPLEX) {
+							a = var1.value[0];
+							b = var1.value[1];
+						} else {
+							a = var1.value;
+						}
+						let c = var2.value[0];
+						let d = var2.value[1];
+						return new this.Variable(VT.COMPLEX, [(a*c + b*d)/(c*c + d*d), (b*c - a*d)/(c*c + d*d)]);
+					} else {
+						return new this.Variable(VT.FLOAT, var1.value / var2.value);
+					}
+				}
+
+				if (token.type == TT.DOUBLE_SLASH) {
+					let var1 = this.Evaluate(n.children[0]);
+					if (var1.type == VT.BOOLEAN) var1.type = VT.INTEGER;
+					let var2 = this.Evaluate(n.children[1]);
+					if (var2.type == VT.BOOLEAN) var2.type = VT.INTEGER;
+
+					if ((var2.type != VT.INTEGER && var2.type != VT.FLOAT)
+						|| (var1.type != VT.INTEGER && var1.type != VT.FLOAT)) {
+						this.Error("Binääristä operaattoria \"//\" ei ole määritelty tyypeille \"" + var1.type + "\" ja \"" + var2.type + "\"", n);
+						return;
+					}
+
+					if (var2.type == VT.INTEGER || var2.type == VT.FLOAT) {
+						if (var2.value == 0) {
+							this.Error("Nollalla jakaminen", n);
+						}
+					}
+					if (var2.type == VT.FLOAT || var1.type == VT.FLOAT) {
+						return new this.Variable(VT.FLOAT, Math.floor(var1.value / var2.value));
+					}
+					return new this.Variable(VT.INTEGER, Math.floor(var1.value / var2.value));
+				}
 			}
 		}
 
@@ -1117,7 +1179,7 @@ var Interpreter = {
 		for (t = 0; t < parsed.length; t++) {
 			node = parsed[t];
 			this.Simplify(node);
-			//this.PrintNode(node, 0);
+			this.PrintNode(node, 0);
 		}
 
 		for (t = 0; t < parsed.length; t++) {
