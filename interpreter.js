@@ -22,7 +22,9 @@ var Interpreter = {
 		INTEGER: "int",
 		FLOAT: "float",
 		COMPLEX: "complex",
-		BOOLEAN: "bool"
+		BOOLEAN: "bool",
+		NONETYPE: "NoneType",
+		NOTIMPLEMENTED: "NotImplementedType",
 	},
 
 	variables: {
@@ -779,6 +781,19 @@ var Interpreter = {
 			if (!original.equals(parsed)) continue;
 			
 			for (i = 0; i < parsed.length; i++) {
+				if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.DOUBLE_ASTERISK, ET.ATOM])) {
+					expr = new this.Expr(ET.ATOM, null);
+					expr.children.push(parsed[i + 1]);
+					expr.children.push(parsed[i]);
+					expr.children.push(parsed[i + 2]);
+					parsed.splice(i, 3, expr);
+					break;
+				}
+			}
+
+			if (!original.equals(parsed)) continue;
+			
+			for (i = 0; i < parsed.length; i++) {
 				if (getTypes(parsed, i, 3).equals([ET.ATOM, TT.ASTERISK, ET.ATOM])) {
 					expr = new this.Expr(ET.ATOM, null);
 					expr.children.push(parsed[i + 1]);
@@ -1008,6 +1023,69 @@ var Interpreter = {
 							this.Error("Binääristä operaattoria \"-\" ei ole määritelty tyypeille \"" + var1.type + "\" ja \"" + var2.type + "\"", n);
 							return;
 						}
+					}
+				}
+
+				if (token.type == TT.TILDE) {
+					if (n.children.length == 1) {
+						let var1 = this.Evaluate(n.children[0]);
+						if (var1.type == VT.BOOLEAN) var1.type = VT.INTEGER;
+						if (var1.type != this.VarType.INTEGER) {
+							this.Error("Unaarista operaattoria \"~\" ei ole määritelty tyypille \"" + var1.type + "\"", n);
+							return;
+						}
+						return new this.Variable(var1.type, ~var1.value);
+					}
+				}
+
+				if (token.type == TT.ASTERISK) {
+					let var1 = this.Evaluate(n.children[0]);
+					if (var1.type == VT.BOOLEAN) var1.type = VT.INTEGER;
+					let var2 = this.Evaluate(n.children[1]);
+					if (var2.type == VT.BOOLEAN) var2.type = VT.INTEGER;
+					if (var1.type == VT.STRING && var2.type == VT.INTEGER) {
+						return new this.Variable(VT.STRING, var1.value.repeat(var2.value));
+					} else if (var2.type == VT.STRING && var1.type == VT.INTEGER) {
+						return new this.Variable(VT.STRING, var2.value.repeat(var1.value));
+					} else if (var1.type == VT.COMPLEX && var2.type == VT.COMPLEX) {
+						return new this.Variable(VT.COMPLEX, [var1.value[0] * var2.value[0] - var1.value[1] * var2.value[1], var1.value[0] * var2.value[1] + var1.value[1] * var2.value[0]]);
+					} else if (var1.type == VT.COMPLEX && (var2.type == VT.INTEGER || var2.type == VT.FLOAT)) {
+						return new this.Variable(VT.COMPLEX, [var1.value[0] * var2.value, var1.value[1] * var2.value]);
+					} else if (var2.type == VT.COMPLEX && (var1.type == VT.INTEGER || var1.type == VT.FLOAT)) {
+						return new this.Variable(VT.COMPLEX, [var2.value[0] * var1.value, var2.value[1] * var1.value]);
+					} else if (var1.type == VT.FLOAT && (var2.type == VT.INTEGER || var2.type == VT.FLOAT)) {
+						return new this.Variable(VT.FLOAT, var1.value * var2.value);
+					} else if (var2.type == VT.FLOAT && (var1.type == VT.INTEGER || var1.type == VT.FLOAT)) {
+						return new this.Variable(VT.FLOAT, var1.value * var2.value);
+					} else if (var2.type == VT.INTEGER && var1.type == VT.INTEGER) {
+						return new this.Variable(VT.INTEGER, var1.value * var2.value);
+					} else {
+						this.Error("Binääristä operaattoria \"*\" ei ole määritelty tyypeille \"" + var1.type + "\" ja \"" + var2.type + "\"", n);
+						return;
+					}
+				}
+
+				if (token.type == TT.DOUBLE_ASTERISK) {
+					let var1 = this.Evaluate(n.children[0]);
+					if (var1.type == VT.BOOLEAN) var1.type = VT.INTEGER;
+					let var2 = this.Evaluate(n.children[1]);
+					if (var2.type == VT.BOOLEAN) var2.type = VT.INTEGER;
+					if (var1.type == VT.COMPLEX && var2.type == VT.COMPLEX) {
+						return new this.Variable(VT.NOTIMPLEMENTED, "NotImplemented");
+					} else if (var1.type == VT.COMPLEX && (var2.type == VT.INTEGER || var2.type == VT.FLOAT)) {
+						return new this.Variable(VT.NOTIMPLEMENTED, "NotImplemented");
+					} else if (var2.type == VT.COMPLEX && (var1.type == VT.INTEGER || var1.type == VT.FLOAT)) {
+						return new this.Variable(VT.NOTIMPLEMENTED, "NotImplemented");
+					} else if (var1.type == VT.FLOAT && (var2.type == VT.INTEGER || var2.type == VT.FLOAT)) {
+						return new this.Variable(VT.FLOAT, Math.pow(var1.value, var2.value));
+					} else if (var2.type == VT.FLOAT && (var1.type == VT.INTEGER || var1.type == VT.FLOAT)) {
+						return new this.Variable(VT.FLOAT, Math.pow(var1.value, var2.value));
+					} else if (var2.type == VT.INTEGER && var1.type == VT.INTEGER) {
+						if (var2.value < 0) return new this.Variable(VT.FLOAT, Math.pow(var1.value, var2.value));
+						return new this.Variable(VT.INTEGER, Math.pow(var1.value, var2.value));
+					} else {
+						this.Error("Binääristä operaattoria \"**\" ei ole määritelty tyypeille \"" + var1.type + "\" ja \"" + var2.type + "\"", n);
+						return;
 					}
 				}
 			}
