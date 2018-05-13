@@ -1104,10 +1104,12 @@ var Interpreter = {
 					if (var2.type == VT.INTEGER || var2.type == VT.FLOAT) {
 						if (var2.value == 0) {
 							this.Error("Nollalla jakaminen", n);
+							return;
 						}
 					} else if (var2.type == VT.COMPLEX) {
-						if (var2.value.equals([0, 0])) {
+						if (var2.value[0] == 0 && var2.value[1] == 0) {
 							this.Error("Nollalla jakaminen", n);
+							return;
 						}
 					}
 
@@ -1143,6 +1145,7 @@ var Interpreter = {
 					if (var2.type == VT.INTEGER || var2.type == VT.FLOAT) {
 						if (var2.value == 0) {
 							this.Error("Nollalla jakaminen", n);
+							return;
 						}
 					}
 					if (var2.type == VT.FLOAT || var1.type == VT.FLOAT) {
