@@ -940,6 +940,7 @@ var Interpreter = {
 						return;
 					}
 				}
+				let VT = this.VarType;
 				if (token.type == TT.PLUS) {
 					if (n.children.length == 1) {
 						let var1 = this.Evaluate(n.children[0]);
@@ -950,7 +951,6 @@ var Interpreter = {
 						}
 						return var1;
 					} else {
-						let VT = this.VarType;
 						let var1 = this.Evaluate(n.children[0]);
 						if (var1.type == VT.BOOLEAN) var1.type = VT.INTEGER;
 						let var2 = this.Evaluate(n.children[1]);
@@ -985,7 +985,7 @@ var Interpreter = {
 							return;
 						}
 						if (var1.type == this.VarType.COMPLEX) return new this.Variable(this.VarType.COMPLEX, [-var1.value[0], -var2.value[1]]);
-						return -var1;
+						return new this.Variable(var1.type, -var1.value);
 					} else {
 						let VT = this.VarType;
 						let var1 = this.Evaluate(n.children[0]);
