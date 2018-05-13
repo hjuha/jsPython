@@ -1117,7 +1117,7 @@ var Interpreter = {
 		for (t = 0; t < parsed.length; t++) {
 			node = parsed[t];
 			this.Simplify(node);
-			this.PrintNode(node, 0);
+			//this.PrintNode(node, 0);
 		}
 
 		for (t = 0; t < parsed.length; t++) {
